@@ -12,28 +12,6 @@ import (
 	"testing"
 )
 
-/* 
-	To create a server in Go, you will typically call ListenAndServe.
-
-	func ListenAndServer(add string, handler Handler) error
-
-	This will:
-
-		* Start a web server listening on a port.
-		* Create a goroutine for every request
-		* Run each goroutine against a Hander
-
-	type Handler interface {
-		ServeHTTP(ResponseWriter, *Request)
-	}
-
-	Handler implements one function - ServeHTTP.
-
-	ServeHTTP expects two arguments:
-		1. Where we WRITE our response
-		2. The REQUEST that was sent to us
-*/
-
 type StubPlayerStore struct {
 	scores map[string]int
 	winCalls []string
@@ -184,7 +162,22 @@ func TestFileSystemStore(t *testing.T) {
         got := store.GetPlayerScore("Chris")
         want := 33
         assertScoreEquals(t, got, want)
-    })
+	})
+	
+	t.Run("store wins for existing players", func(t *testing.T) {
+		database, cleanDatabase := createTempFile(t, `[
+			{"Name": "Cleo", "Wins": 10},
+			{"Name": "Chris", "Wins": 33}]`)
+		defer cleanDatabase()
+
+		store := FileSystemPlayerStore{database}
+
+		store.RecordWin("Chris")
+
+		got := store.GetPlayerScore("Chris")
+		want := 34
+		assertScoreEquals(t, got, want)
+	})
 }
 
 func assertStatus(t *testing.T, got, want int) {
