@@ -5,23 +5,17 @@ import (
 	"net/http"
 )
 
-// PlayerStore stores and fetches a player's score
+// PlayerStore stores information about player's scores.
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
 }
 
-//PlayerServer needs to be able to use a PlayerStore, so it needs a 
-// reference to one. So we give PlayerServer an instance of PlayerStore.
-//
-// PlayerServer takes http.ResponseWriter, which implements
-// io.Writer. This means we can use fmt.Fprint to send strings
-// as HTTP responses.
+// PlayerServer is an HTTP interface for player information.
 type PlayerServer struct {
 	store PlayerStore
 }
 
-//ServeHTTP is a method on the PlayerServer struct
 func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	player := r.URL.Path[len("/players/"):]
 
