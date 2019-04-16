@@ -1,0 +1,158 @@
+package main
+
+import (
+	"fmt"
+	"net/http/httptest"
+	"net/http"
+	"testing"
+)
+
+/* 
+	To create a server in Go, you will typically call ListenAndServe.
+
+	func ListenAndServer(add string, handler Handler) error
+
+	This will:
+
+		* Start a web server listening on a port.
+		* Create a goroutine for every request
+		* Run each goroutine against a Hander
+
+	type Handler interface {
+		ServeHTTP(ResponseWriter, *Request)
+	}
+
+	Handler implements one function - ServeHTTP.
+
+	ServeHTTP expects two arguments:
+		1. Where we WRITE our response
+		2. The REQUEST that was sent to us
+*/
+
+type StubPlayerStore struct {
+	scores map[string]int
+	winCalls []string
+}
+
+func (s *StubPlayerStore) GetPlayerScore(name string) int {
+	score := s.scores[name]
+	return score
+}
+
+func (s *StubPlayerStore) RecordWin(name string) {
+	s.winCalls = append(s.winCalls, name)
+}
+
+func TestGETPlayers(t *testing.T) {
+	store := StubPlayerStore{
+		map[string]int{
+			"Pepper": 20,
+			"Floyd": 10,
+		},
+		nil,
+
+	}
+	server := &PlayerServer{&store}
+
+	t.Run("returns Pepper's score", func(t *testing.T) {
+		request := newGetScoreRequest("Pepper")
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), "20")
+	})
+
+	t.Run("returns Floyd's score", func(t *testing.T) {
+		request := newGetScoreRequest("Floyd")
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+		
+		assertStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), "10")
+	})
+
+	t.Run("returns 404 on missing pages", func(t *testing.T) {
+		request := newGetScoreRequest("Apollo")
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusNotFound)
+	})
+}
+
+func assertStatus(t *testing.T, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Errorf("did not get correct status, got %d, want %d", got, want)
+	}
+}
+
+func newGetScoreRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
+	return req
+}
+
+func assertResponseBody(t *testing.T, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Errorf("response body is wrong, got '%s', want '%s'", got, want)
+	}
+}
+
+func TestStoreWins(t *testing.T) {
+	store := StubPlayerStore{
+		map[string]int{},
+		nil,
+	}
+	server := &PlayerServer{&store}
+
+	t.Run("it records wins on POST", func(t *testing.T) {
+		player := "Pepper"
+
+		request := newPostWinRequest(player)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+
+		if len(store.winCalls) != 1 {
+			t.Errorf("got %d calls to RecordWin want %d", len(store.winCalls), 1)
+		}
+
+		// Now that we know there is one element in our winCalls slice,
+		// we can safely reference the first (and only) element.
+		if store.winCalls[0] != player {
+			t.Errorf("did not store correct winner. Got '%s', want '%s'", store.winCalls[0], player)
+		}
+	})
+}
+
+func newPostWinRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", name), nil)
+	return req
+}
+
+func TestRecordWinsAndRetrievingThem(t *testing.T) {
+
+	// We initialize the two components we are trying to integrate.
+	store := InMemoryPlayerStore{}
+	server := PlayerServer{&store}
+	player := "Pepper"
+
+	// Then fire off three requests, to record 3 wins for the player.
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+
+	// We store the final response, where we ask for the new score.
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, newGetScoreRequest(player))
+	assertStatus(t, response.Code, http.StatusOK)
+
+	assertResponseBody(t, response.Body.String(), "3")
+}
