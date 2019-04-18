@@ -9,18 +9,18 @@ import (
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	database, cleanDatabase := createTempFile(t, `[]`)
 	defer cleanDatabase()
+	store, err := NewFileSystemPlayerStore(database)
 
-    store, err := NewFileSystemPlayerStore(database)
 	assertNoError(t, err)
 
-    server := NewPlayerServer(store)
-    player := "Pepper"
+	server := NewPlayerServer(store)
+	player := "Pepper"
 
-    server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-    server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-    server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
-    t.Run("get score", func(t *testing.T) {
+	t.Run("get score", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newGetScoreRequest(player))
 		assertStatus(t, response.Code, http.StatusOK)
@@ -37,7 +37,6 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		want := []Player{
 			{"Pepper", 3},
 		}
-		
 		assertLeague(t, got, want)
 	})
 }

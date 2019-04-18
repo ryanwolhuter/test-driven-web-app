@@ -1,41 +1,60 @@
-package poker
+package poker_test
 
 import (
+	"github.com/ryanwolhuter/test-driven-web-app"
+	"io"
 	"strings"
 	"testing"
 )
 
 func TestCLI(t *testing.T) {
-	
-	    t.Run("record chris win from user input", func(t *testing.T) {
-        in := strings.NewReader("Chris wins\n")
-        playerStore := &StubPlayerStore{}
 
-        cli := &CLI{playerStore, in}
-        cli.PlayPoker()
+	t.Run("record chris win from user input", func(t *testing.T) {
+		in := strings.NewReader("Chris wins\n")
+		playerStore := &poker.StubPlayerStore{}
 
-        assertPlayerWin(t, playerStore, "Chris")
-    })
+		cli := poker.NewCLI(playerStore, in)
+		cli.PlayPoker()
 
-    t.Run("record cleo win from user input", func(t *testing.T) {
-        in := strings.NewReader("Cleo wins\n")
-        playerStore := &StubPlayerStore{}
+		poker.AssertPlayerWin(t, playerStore, "Chris")
+	})
 
-        cli := &CLI{playerStore, in}
-        cli.PlayPoker()
+	t.Run("record cleo win from user input", func(t *testing.T) {
+		in := strings.NewReader("Cleo wins\n")
+		playerStore := &poker.StubPlayerStore{}
 
-        assertPlayerWin(t, playerStore, "Cleo")
-    })
+		cli := poker.NewCLI(playerStore, in)
+		cli.PlayPoker()
+
+		poker.AssertPlayerWin(t, playerStore, "Cleo")
+	})
+
+	t.Run("do not read beyond the first newline", func(t *testing.T) {
+		in := failOnEndReader{
+			t,
+			strings.NewReader("Chris wins\n hello there"),
+		}
+
+		playerStore := &poker.StubPlayerStore{}
+
+		cli := poker.NewCLI(playerStore, in)
+		cli.PlayPoker()
+	})
+
 }
 
-func assertPlayerWin(t *testing.T, store *StubPlayerStore, winner string) {
-	t.Helper()
+type failOnEndReader struct {
+	t   *testing.T
+	rdr io.Reader
+}
 
-	if len(store.winCalls) != 1 {
-		t.Fatalf("got %d calls to RecordWin want %d", len(store.winCalls), 1)
+func (m failOnEndReader) Read(p []byte) (n int, err error) {
+
+	n, err = m.rdr.Read(p)
+
+	if n == 0 || err == io.EOF {
+		m.t.Fatal("Read to the end when you shouldn't have")
 	}
 
-	if store.winCalls[0] != winner {
-		t.Errorf("did not store correct winner, got '%s', want '%s'", store.winCalls[0], winner)
-	}
+	return n, err
 }

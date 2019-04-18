@@ -6,20 +6,20 @@ import (
 	"net/http"
 )
 
-// PlayerStore stores information about player's scores.
+// PlayerStore stores score information about players
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
 	GetLeague() League
 }
 
-// Player stores a name with a number of wins.
+// Player stores a name with a number of wins
 type Player struct {
 	Name string
 	Wins int
 }
 
-// PlayerServer is an HTTP interface for player information.
+// PlayerServer is a HTTP interface for player information
 type PlayerServer struct {
 	store PlayerStore
 	http.Handler
@@ -27,9 +27,10 @@ type PlayerServer struct {
 
 const jsonContentType = "application/json"
 
-//NewPlayerServer creates a PlayerServer with routing configured.
+// NewPlayerServer creates a PlayerServer with routing configured
 func NewPlayerServer(store PlayerStore) *PlayerServer {
 	p := new(PlayerServer)
+
 	p.store = store
 
 	router := http.NewServeMux()
@@ -42,38 +43,28 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(p.store.GetLeague())
 	w.Header().Set("content-type", jsonContentType)
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(p.store.GetLeague())
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
-    player := r.URL.Path[len("/players/"):]
+	player := r.URL.Path[len("/players/"):]
 
-    switch r.Method {
-    case http.MethodPost:
-        p.processWin(w, player)
-    case http.MethodGet:
-        p.showScore(w, player)
-    }
-}
-
-// GetPlayerScore takes a player's name and returns their score.
-func GetPlayerScore(name string) string {
-	if name == "Pepper" {
-		return "20"
+	switch r.Method {
+	case http.MethodPost:
+		p.processWin(w, player)
+	case http.MethodGet:
+		p.showScore(w, player)
 	}
-	if name == "Floyd" {
-		return "10"
-	}
-	return ""
 }
 
 func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
 	score := p.store.GetPlayerScore(player)
+
 	if score == 0 {
 		w.WriteHeader(http.StatusNotFound)
 	}
+
 	fmt.Fprint(w, score)
 }
 
