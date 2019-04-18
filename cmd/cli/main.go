@@ -1,22 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"github.com/ryanwolhuter/test-driven-web-app"
-	"fmt"
+
+	poker "github.com/ryanwolhuter/test-driven-web-app"
 )
 
 const dbFileName = "game.db.json"
 
 func main() {
-    store, err := poker.FileSystemPlayerStoreFromFile(dbFileName)
+	store, err := poker.FileSystemPlayerStoreFromFile(dbFileName)
 
-    if err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    fmt.Println("Let's play poker")
-    fmt.Println("Type {Name} wins to record a win")
-    poker.NewCLI(store, os.Stdin).PlayPoker()
+	fmt.Println("Let's play poker")
+	fmt.Println("Type {Name} wins to record a win")
+	poker.NewCLI(store, os.Stdin, poker.BlindAlerterFunc(poker.StdOutAlerter)).PlayPoker()
 }
