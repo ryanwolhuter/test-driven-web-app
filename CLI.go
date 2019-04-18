@@ -37,13 +37,15 @@ const PlayerPrompt = "Please enter the number of players: "
 // ErrorPlayerNumberPrompt tells the user they entered in the value wrong
 const ErrorPlayerNumberPrompt = "ERROR: Please enter the number of players as a number: "
 
+const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
+
 // PlayPoker starts the game
 func (cli *CLI) PlayPoker() {
 	fmt.Fprint(cli.out, PlayerPrompt)
 
 	numberOfPlayers, err := strconv.Atoi(cli.readLine())
 	if err != nil {
-		fmt.Fprint(cli.out, "you're so silly")
+		fmt.Fprint(cli.out, BadPlayerInputErrMsg)
 		return
 	}
 
