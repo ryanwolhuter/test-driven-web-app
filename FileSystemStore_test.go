@@ -18,6 +18,7 @@ func createTempFile(t *testing.T, initialData string) (*os.File, func()) {
 	tmpfile.Write([]byte(initialData))
 
 	removeFile := func() {
+		tmpfile.Close()
 		os.Remove(tmpfile.Name())
 	}
 
@@ -26,7 +27,7 @@ func createTempFile(t *testing.T, initialData string) (*os.File, func()) {
 
 func TestFileSystemStore(t *testing.T) {
 
-	t.Run("league sorted", func(t *testing.T) {
+	t.Run("League sorted", func(t *testing.T) {
 		database, cleanDatabase := createTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
@@ -119,6 +120,6 @@ func assertScoreEquals(t *testing.T, got, want int) {
 func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
-		t.Fatalf("didn't expect an error but got one, %v", err)
+		t.Fatalf("didnt expect an error but got one, %v", err)
 	}
 }
