@@ -21,6 +21,7 @@ type GameSpy struct {
 
 func (g *GameSpy) Start(numberOfPlayers int) {
 	g.StartCalledWith = numberOfPlayers
+	g.StartCalled = true
 }
 
 func (g *GameSpy) Finish(winner string) {

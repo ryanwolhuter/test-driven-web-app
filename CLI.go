@@ -41,7 +41,10 @@ const ErrorPlayerNumberPrompt = "ERROR: Please enter the number of players as a 
 func (cli *CLI) PlayPoker() {
 	fmt.Fprint(cli.out, PlayerPrompt)
 
-	numberOfPlayers, _ := strconv.Atoi(cli.readLine())
+	numberOfPlayers, err := strconv.Atoi(cli.readLine())
+	if err != nil {
+		return
+	}
 
 	cli.game.Start(numberOfPlayers)
 
