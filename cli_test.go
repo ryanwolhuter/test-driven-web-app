@@ -86,13 +86,15 @@ func TestCLI(t *testing.T) {
 		cli.PlayPoker()
 
 		got := stdout.String()
-		want := "Please enter the number of players: "
+		want := PlayerPrompt
 
 		if got != want {
 			t.Errorf("got '%s', want '%s'", got, want)
 		}
 	})
 }
+
+const PlayerPrompt = "Please enter the number of players: "
 
 func assertScheduledAlert(t *testing.T, got scheduledAlert, want scheduledAlert) {
 	if got.amount != want.amount {
