@@ -21,10 +21,6 @@ func NewCLI(store PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
 	}
 }
 
-type BlindAlerter interface {
-	ScheduleAlertAt(duration time.Duration, amount int)
-}
-
 func (cli *CLI) PlayPoker() {
 	cli.ScheduleBlindAlerts()
     userInput := cli.readLine()
