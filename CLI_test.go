@@ -1,11 +1,12 @@
 package poker_test
 
 import (
-	"github.com/ryanwolhuter/test-driven-web-app"
 	"bytes"
 	"io"
 	"strings"
 	"testing"
+
+	poker "github.com/ryanwolhuter/test-driven-web-app"
 )
 
 var dummyBlindAlerter = &poker.SpyBlindAlerter{}
@@ -16,7 +17,7 @@ var dummyStdOut = &bytes.Buffer{}
 type GameSpy struct {
 	StartCalledWith  int
 	FinishCalledWith string
-	StartCalled bool
+	StartCalled      bool
 }
 
 func (g *GameSpy) Start(numberOfPlayers int) {
@@ -96,6 +97,14 @@ func TestCLI(t *testing.T) {
 
 		if game.StartCalled {
 			t.Errorf("game should not have started")
+		}
+
+		gotPrompt := stdout.String()
+
+		wantPrompt := poker.PlayerPrompt + "you're so silly"
+
+		if gotPrompt != wantPrompt {
+			t.Errorf("got '%s', want '%s'", gotPrompt, wantPrompt)
 		}
 	})
 
