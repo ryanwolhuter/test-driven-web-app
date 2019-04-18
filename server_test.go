@@ -90,15 +90,7 @@ func TestStoreWins(t *testing.T) {
 
 		assertStatus(t, response.Code, http.StatusAccepted)
 
-		if len(store.winCalls) != 1 {
-			t.Errorf("got %d calls to RecordWin want %d", len(store.winCalls), 1)
-		}
-
-		// Now that we know there is one element in our winCalls slice,
-		// we can safely reference the first (and only) element.
-		if store.winCalls[0] != player {
-			t.Errorf("did not store correct winner. Got '%s', want '%s'", store.winCalls[0], player)
-		}
+		assertPlayerWin(t, &store, player)
 	})
 }
 
